@@ -1,27 +1,23 @@
 // ─────────────────────────────────────────────────────────────────
-// queries/climbers_losers.malloy
-// Who had the biggest revenue gains and drops in the last year?
+// climbers_losers.malloy
+// Who had the biggest revenue gains and drops? (FY2023 → FY2024)
+// Click "Run" above any query block to execute it.
 // ─────────────────────────────────────────────────────────────────
 
-import "../ai_revenue.malloy"
+import "./ai_revenue.malloy"
 
-// ── 1. YoY Revenue Change: FY2024 vs FY2023 ───────────────────────
-// Shows absolute $ change and % growth. Sort by growth % to find
-// the biggest climbers at the top, losers at the bottom.
-
+// ── 1. YoY Revenue: FY2023 vs FY2024 side by side ─────────────────
 run: revenue_facts -> {
-  where: period_type = 'annual' and fiscal_year = 2024 | 2023
+  where: period_type = 'annual' and fiscal_year = 2023 | 2024
+  group_by: company_name, tier
   nest: by_year is {
     group_by: fiscal_year
-    aggregate: rev is val_billions.sum()
+    aggregate: rev_b is val_billions.sum()
   }
-  group_by: company_name, tier
   order_by: company_name
 }
 
 // ── 2. Annual Revenue Leaderboard (FY2024) ────────────────────────
-// Ranked by total revenue
-
 run: revenue_facts -> {
   where: period_type = 'annual' and fiscal_year = 2024
   group_by: company_name, tier
@@ -29,41 +25,7 @@ run: revenue_facts -> {
   order_by: revenue_2024_b desc
 }
 
-// ── 3. Fastest Growing (by % YoY, FY2023→FY2024) ─────────────────
-// Pure growth rate — small companies can shine here
-
-run: revenue_facts -> {
-  where: period_type = 'annual'
-  group_by: company_name, tier
-  aggregate:
-    rev_2023 is val_billions.sum() { where: fiscal_year = 2023 }
-    rev_2024 is val_billions.sum() { where: fiscal_year = 2024 }
-  order_by: company_name
-}
-
-// ── 4. Multi-Year Revenue Trend by Company ────────────────────────
-// See the full arc from FY2021 → FY2024
-
-run: revenue_facts -> annual_revenue
-
-// ── 5. Revenue by Tier Over Time ──────────────────────────────────
-// Big Tech vs AI Infrastructure vs AI Software
-
-run: revenue_facts -> revenue_by_tier
-
-// ── 6. Quarterly Revenue Momentum (last 4 quarters) ───────────────
-// Spot acceleration or deceleration
-
-run: revenue_facts -> {
-  where: period_type = 'quarterly' and fiscal_year = 2024
-  group_by: company_name, tier, end_quarter
-  aggregate: quarterly_rev_b is val_billions.sum()
-  order_by: company_name, end_quarter
-}
-
-// ── 7. Breakout Stars ─────────────────────────────────────────────
-// Companies with 3+ years of consecutive annual revenue growth
-
+// ── 3. Multi-Year Growth Arc (FY2021 → FY2024) ────────────────────
 run: revenue_facts -> {
   where: period_type = 'annual'
   group_by: company_name, tier
@@ -74,3 +36,17 @@ run: revenue_facts -> {
     rev_2024 is val_billions.sum() { where: fiscal_year = 2024 }
   order_by: company_name
 }
+
+// ── 4. Revenue by Tier Over Time ──────────────────────────────────
+run: revenue_facts -> revenue_by_tier
+
+// ── 5. Quarterly Revenue (FY2024) ─────────────────────────────────
+run: revenue_facts -> {
+  where: period_type = 'quarterly' and fiscal_year = 2024
+  group_by: company_name, tier, end_quarter
+  aggregate: quarterly_rev_b is val_billions.sum()
+  order_by: company_name, end_quarter
+}
+
+// ── 6. Full Multi-Year Trend ───────────────────────────────────────
+run: revenue_facts -> annual_revenue
