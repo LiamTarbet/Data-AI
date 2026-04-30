@@ -1,46 +1,74 @@
 // ─────────────────────────────────────────────────────────────────
 // company_deep_dive.malloy
-// Drill into individual companies — change any ticker to explore
+// Change any ticker value to drill into a different company
 // ─────────────────────────────────────────────────────────────────
 
 import "./ai_revenue.malloy"
 
-// ── NVDA Full History ─────────────────────────────────────────────
+// ── NVDA full history ─────────────────────────────────────────────
 run: revenue_facts -> {
   where: ticker = 'NVDA'
-  group_by: fiscal_year, fiscal_period, period_type
-  aggregate: revenue_b is val_billions.sum()
-  order_by: fiscal_year, fiscal_period
+  group_by: end_year, end_quarter, period_type, tag
+  aggregate: value_b is val_billions.sum()
+  order_by: end_year, end_quarter
 }
 
-// ── NVDA vs AMD head-to-head ──────────────────────────────────────
+// ── NVDA vs AMD ───────────────────────────────────────────────────
 run: revenue_facts -> {
-  where: ticker = 'NVDA' | 'AMD' and period_type = 'annual'
-  group_by: company_name, fiscal_year
+  where: ticker = 'NVDA' | 'AMD'
+    and period_type = 'annual'
+    and tag = 'Revenues'
+        | 'RevenueFromContractWithCustomerExcludingAssessedTax'
+        | 'SalesRevenueNet'
+  group_by: company_name, ticker, end_year
   aggregate: revenue_b is val_billions.sum()
-  order_by: company_name, fiscal_year
+  order_by: ticker, end_year
 }
 
-// ── AI Software tier: Palantir, C3.ai, SoundHound, BigBear ───────
+// ── AI Infrastructure ─────────────────────────────────────────────
 run: revenue_facts -> {
-  where: tier = 'AI Software' and period_type = 'annual'
-  group_by: company_name, fiscal_year
+  where: tier = 'AI Infrastructure'
+    and period_type = 'annual'
+    and tag = 'Revenues'
+        | 'RevenueFromContractWithCustomerExcludingAssessedTax'
+        | 'SalesRevenueNet'
+  group_by: company_name, ticker, end_year
   aggregate: revenue_b is val_billions.sum()
-  order_by: fiscal_year, revenue_b desc
+  order_by: end_year desc, revenue_b desc
 }
 
-// ── AI Infrastructure tier ────────────────────────────────────────
+// ── Big Tech ──────────────────────────────────────────────────────
 run: revenue_facts -> {
-  where: tier = 'AI Infrastructure' and period_type = 'annual'
-  group_by: company_name, fiscal_year
+  where: tier = 'Big Tech'
+    and period_type = 'annual'
+    and tag = 'Revenues'
+        | 'RevenueFromContractWithCustomerExcludingAssessedTax'
+        | 'SalesRevenueNet'
+  group_by: company_name, ticker, end_year
   aggregate: revenue_b is val_billions.sum()
-  order_by: fiscal_year, revenue_b desc
+  order_by: end_year desc, revenue_b desc
 }
 
-// ── Big Tech tier ─────────────────────────────────────────────────
+// ── AI Software ───────────────────────────────────────────────────
 run: revenue_facts -> {
-  where: tier = 'Big Tech' and period_type = 'annual'
-  group_by: company_name, fiscal_year
+  where: tier = 'AI Software'
+    and period_type = 'annual'
+    and tag = 'Revenues'
+        | 'RevenueFromContractWithCustomerExcludingAssessedTax'
+        | 'SalesRevenueNet'
+  group_by: company_name, ticker, end_year
   aggregate: revenue_b is val_billions.sum()
-  order_by: fiscal_year, revenue_b desc
+  order_by: end_year desc, revenue_b desc
+}
+
+// ── Quarterly momentum (change ticker as needed) ──────────────────
+run: revenue_facts -> {
+  where: ticker = 'NVDA'
+    and period_type = 'quarterly'
+    and tag = 'Revenues'
+        | 'RevenueFromContractWithCustomerExcludingAssessedTax'
+        | 'SalesRevenueNet'
+  group_by: end_year, end_quarter, period_label
+  aggregate: revenue_b is val_billions.sum()
+  order_by: end_year, end_quarter
 }

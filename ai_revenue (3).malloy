@@ -1,0 +1,57 @@
+// ─────────────────────────────────────────────────────────────────
+// ai_revenue.malloy
+// Semantic model — AI company SEC EDGAR revenue data
+// ─────────────────────────────────────────────────────────────────
+
+source: companies is duckdb.table('data/companies.parquet') extend {
+  primary_key: cik
+}
+
+source: revenue_facts is duckdb.table('data/revenue_facts.parquet') extend {
+
+  join_one: companies on revenue_facts.cik = companies.cik
+
+  dimension:
+    company_name is name
+    period_label is concat(end_year::string, ' Q', end_quarter::string)
+
+  measure:
+    total_b      is val_billions.sum()
+    filing_count is count()
+
+  view: by_company_year is {
+    where: period_type = 'annual'
+      and tag = 'Revenues'
+          | 'RevenueFromContractWithCustomerExcludingAssessedTax'
+          | 'SalesRevenueNet'
+    group_by: company_name, ticker, tier, end_year
+    aggregate: total_b
+    order_by: end_year desc, total_b desc
+  }
+
+  view: by_tier_year is {
+    where: period_type = 'annual'
+      and tag = 'Revenues'
+          | 'RevenueFromContractWithCustomerExcludingAssessedTax'
+          | 'SalesRevenueNet'
+    group_by: tier, end_year
+    aggregate: total_b
+    order_by: end_year desc, total_b desc
+  }
+
+  view: quarterly is {
+    where: period_type = 'quarterly'
+      and tag = 'Revenues'
+          | 'RevenueFromContractWithCustomerExcludingAssessedTax'
+          | 'SalesRevenueNet'
+    group_by: company_name, ticker, tier, end_year, end_quarter, period_label
+    aggregate: total_b
+    order_by: company_name, end_year, end_quarter
+  }
+
+  view: all_metrics is {
+    group_by: company_name, ticker, tier, tag, end_year, period_type
+    aggregate: total_b
+    order_by: company_name, end_year desc
+  }
+}
