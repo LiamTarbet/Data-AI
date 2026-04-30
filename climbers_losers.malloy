@@ -1,0 +1,52 @@
+// ─────────────────────────────────────────────────────────────────
+// climbers_losers.malloy
+// Who had the biggest revenue gains and drops? (FY2023 → FY2024)
+// Click "Run" above any query block to execute it.
+// ─────────────────────────────────────────────────────────────────
+
+import "./ai_revenue.malloy"
+
+// ── 1. YoY Revenue: FY2023 vs FY2024 side by side ─────────────────
+run: revenue_facts -> {
+  where: period_type = 'annual' and fiscal_year = 2023 | 2024
+  group_by: company_name, tier
+  nest: by_year is {
+    group_by: fiscal_year
+    aggregate: rev_b is val_billions.sum()
+  }
+  order_by: company_name
+}
+
+// ── 2. Annual Revenue Leaderboard (FY2024) ────────────────────────
+run: revenue_facts -> {
+  where: period_type = 'annual' and fiscal_year = 2024
+  group_by: company_name, tier
+  aggregate: revenue_2024_b is val_billions.sum()
+  order_by: revenue_2024_b desc
+}
+
+// ── 3. Multi-Year Growth Arc (FY2021 → FY2024) ────────────────────
+run: revenue_facts -> {
+  where: period_type = 'annual'
+  group_by: company_name, tier
+  aggregate:
+    rev_2021 is val_billions.sum() { where: fiscal_year = 2021 }
+    rev_2022 is val_billions.sum() { where: fiscal_year = 2022 }
+    rev_2023 is val_billions.sum() { where: fiscal_year = 2023 }
+    rev_2024 is val_billions.sum() { where: fiscal_year = 2024 }
+  order_by: company_name
+}
+
+// ── 4. Revenue by Tier Over Time ──────────────────────────────────
+run: revenue_facts -> revenue_by_tier
+
+// ── 5. Quarterly Revenue (FY2024) ─────────────────────────────────
+run: revenue_facts -> {
+  where: period_type = 'quarterly' and fiscal_year = 2024
+  group_by: company_name, tier, end_quarter
+  aggregate: quarterly_rev_b is val_billions.sum()
+  order_by: company_name, end_quarter
+}
+
+// ── 6. Full Multi-Year Trend ───────────────────────────────────────
+run: revenue_facts -> annual_revenue
