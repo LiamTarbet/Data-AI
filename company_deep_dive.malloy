@@ -1,0 +1,39 @@
+// ─────────────────────────────────────────────────────────────────
+// queries/company_deep_dive.malloy
+// Drill into any individual company's revenue history
+// Change the `where: ticker = 'NVDA'` to any ticker in the dataset
+// ─────────────────────────────────────────────────────────────────
+
+import "../ai_revenue.malloy"
+
+// ── NVDA Full History ─────────────────────────────────────────────
+run: revenue_facts -> {
+  where: ticker = 'NVDA'
+  group_by: fiscal_year, fiscal_period, period_type
+  aggregate: revenue_b is val_billions.sum()
+  order_by: fiscal_year, fiscal_period
+}
+
+// ── NVDA vs AMD: Head-to-Head ─────────────────────────────────────
+run: revenue_facts -> {
+  where: ticker = 'NVDA' | 'AMD' and period_type = 'annual'
+  group_by: company_name, fiscal_year
+  aggregate: revenue_b is val_billions.sum()
+  order_by: company_name, fiscal_year
+}
+
+// ── Pure-play AI Software: C3.ai, Palantir, SoundHound ───────────
+run: revenue_facts -> {
+  where: tier = 'AI Software' and period_type = 'annual'
+  group_by: company_name, fiscal_year
+  aggregate: revenue_b is val_billions.sum()
+  order_by: fiscal_year, revenue_b desc
+}
+
+// ── AI Infrastructure Tier (NVDA, AMD, AVGO, ARM, SMCI) ──────────
+run: revenue_facts -> {
+  where: tier = 'AI Infrastructure' and period_type = 'annual'
+  group_by: company_name, fiscal_year
+  aggregate: revenue_b is val_billions.sum()
+  order_by: fiscal_year, revenue_b desc
+}
